@@ -69,15 +69,18 @@ if dfs.has_path_to(destino):
 else:
     print("Não, os estados não estão conectados por terra.")
 
+
 # 2. Caminho encontrado pela DFS
 if dfs.has_path_to(destino):
     caminho_dfs = " -> ".join([nomes_estados[v] for v in dfs.path_to(destino)])
     print(f"Caminho DFS de {nomes_estados[origem]} até {nomes_estados[destino]}: {caminho_dfs}")
 
+
 # 3. Caminho encontrado pela BFS
 if bfs.has_path_to(destino):
     caminho_bfs = " -> ".join([nomes_estados[v] for v in bfs.path_to(destino)])
     print(f"Caminho BFS de {nomes_estados[origem]} até {nomes_estados[destino]}: {caminho_bfs}")
+
 
 # 4. Quais estados são alcançáveis a partir de origem?
 estados_alcancaveis = [v for v in range(graph.V) if dfs.has_path_to(v)]
