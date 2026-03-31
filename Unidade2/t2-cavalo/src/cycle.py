@@ -48,7 +48,10 @@ class Cycle:
     def dfs(self, G, v, u):
         self.marked[v] = True
         for w in G.adj[v]:
+            if self.has_cycle:
+                return
             if not self.marked[w]:
+                self.edgeTo[w] = v
                 self.dfs(G, w, v)
             elif w != u:
                 self._cycle = []

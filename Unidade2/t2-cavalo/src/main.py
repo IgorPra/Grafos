@@ -6,7 +6,8 @@ from breadth_first_paths import BreadthFirstPaths
 from cc import CC
 from cycle import Cycle
 
-arquivo_entrada = Path.cwd() / "dados" / "entrada.txt"
+BASE_DIR = Path(__file__).resolve().parent.parent
+ARQUIVO_ENTRADA = BASE_DIR / "dados" / "entrada.txt"
 
 def new_graph(caminho: Path):
     with caminho.open("r", encoding="utf-8") as f:
@@ -29,16 +30,16 @@ def new_graph(caminho: Path):
                 g.add_edge(v, w)
     return g
 
-#Criação do Grafo e do dfs e bfs com base na origem do arquivo de entrada
-graph = new_graph(arquivo_entrada)
+graph = new_graph(ARQUIVO_ENTRADA)
 
+if not graph:
+    raise ValueError("O arquivo de entrada está vazio ou não contém as informações necessárias.")
 
-
+print("Lista de adjacência:")
 print(graph)
 
-
 cc = CC(graph)
-print(cc.count, " components")
+print("Componentes conexas:", cc.count)
 
 components = []
 for i in range(cc.count):
@@ -48,64 +49,24 @@ for v in range(graph.V):
     components[cc.id[v]].add(v)
 
 for i in range(cc.count):
+    count = 1
+    print(f"Vértices da componente {i}: ", end='')
     for v in components[i]:
-        print(v, " ", end='')
+        print(v, end=' ')
     print()
+    count += 1
 
+# Distância entre os vértices 0 e 8
 bfs = BreadthFirstPaths(graph, 0)
 
 count = -1
 for x in bfs.path_to(8):
     count += 1
-print(count)
-
+print(f"Distância mínima entre 0(0,0) e 8(2,2): {count}")
 
 cycle = Cycle(graph)
 
-if cycle.has_cycle:
-    print("Graph is cyclic")
-else:
-    print("Graph is acyclic")
+print(f"O grafo possui ciclo: {'Sim' if cycle.has_cycle else 'Não'}")
 
+print(f"Ciclo encontrado: {cycle.cycle()}")
 
-#print(cycle.cycle())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# movimentos = [(2,1),(2,-1),(-2,1),(-2,-1),
-#               (1,2),(1,-2),(-1,2),(-1,-2)]
-
-# arestas = []
-
-# for linha in range(3):
-#   for coluna in range(3):
-#     origem = linha*3 + coluna
-    
-#     for dl, dc in movimentos:
-#       nl = linha + dl
-#       nc = coluna + dc
-      
-#       if 0 <= nl < 3 and 0 <= nc < 3:
-#         destino = nl*3 + nc
-        
-#         if origem < destino:
-#           arestas.append((origem, destino))
-
-# print(9)
-# print(len(arestas))
-# for a in arestas:
-#     print(a[0], a[1])
