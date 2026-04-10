@@ -1,92 +1,115 @@
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Scanner;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
 
 public class Main {
 
     public static void main(String[] args) {
-        // Caminho do arquivo conforme a estrutura pedida no T3
-        String filename = "dados/entrada_eulerizada.txt";
-        
+        String caminho = "dados/entrada_eulerizada.txt";
+
         try {
-            Scanner in = new Scanner(new File(filename));
-            
-            if (!in.hasNextInt()) return;
-            int V = in.nextInt(); // Número de vértices
-            int E_count = in.nextInt(); // Número de arestas
-            
-            // Usamos EdgeWeightedDigraph para suportar os pesos exigidos
-            EdgeWeightedDigraph G = new EdgeWeightedDigraph(V);
-            
-            System.out.println("--- Análise do Grafo Eulerizado ---");
-            
-            // 1. Leitura e construção
-            for (int i = 0; i < E_count; i++) {
-                int v = in.nextInt();
-                int w = in.nextInt();
-                double weight = in.nextDouble();
-                G.addEdge(new DirectedEdge(v, w, weight));
-            }
-            in.close();
+            BufferedReader br = new BufferedReader(new FileReader(caminho));
 
-            // 2. Cálculo de Graus e Verificação de Balanço
-            // Em um dígrafo euleriano, in-degree(v) == out-degree(v) para todos os v
-            System.out.println("Vértice\tGrau Entrada\tGrau Saída\tStatus");
-            boolean isBalanced = true;
-            for (int v = 0; v < G.V(); v++) {
-                int inDegree = 0;
-                // Cálculo manual do in-degree (dependendo da versão da algs4)
-                for (DirectedEdge e : G.edges()) {
-                    if (e.to() == v) inDegree++;
-                }
-                int outDegree = G.outdegree(v);
-                
-                String status = (inDegree == outDegree) ? "OK" : "DESBALANCEADO";
-                if (inDegree != outDegree) isBalanced = false;
-                
-                System.out.printf("%d\t%d\t\t%d\t\t%s\n", v, inDegree, outDegree, status);
+            int V = Integer.parseInt(br.readLine().trim());
+            int E = Integer.parseInt(br.readLine().trim());
+
+            // Grafo com pesos
+            EdgeWeightedDigraph weightedGraph = new EdgeWeightedDigraph(V);
+
+            Digraph graph = new Digraph(V);
+
+            for (int i = 0; i < E; i++) {
+                String[] parts = br.readLine().split(" ");
+
+                int v = Integer.parseInt(parts[0]);
+                int w = Integer.parseInt(parts[1]);
+                double peso = Double.parseDouble(parts[2]);
+
+                weightedGraph.addEdge(new DirectedEdge(v, w, peso));
+                graph.addEdge(v, w);
             }
 
-            if (!isBalanced) {
-                System.out.println("\nERRO: O grafo não está balanceado. Verifique a eulerização manual.");
+            br.close();
+
+
+            // Graus de saida e entrada
+            System.out.println("Graus dos vértices:");
+            boolean balanceado = true;
+
+            for (int v = 0; v < V; v++) {
+                int out = graph.outdegree(v);
+                int in = graph.indegree(v);
+
+                System.out.println("Vértice " + v +
+                        " | out = " + out +
+                        " | in = " + in);
+
+                if (out != in) balanceado = false;
+            }
+
+            if (!balanceado) {
+                System.out.println("\nGrafo NÃO está balanceado.");
                 return;
             }
 
-            // 3. Execução do Método de Hierholzer
-            // A classe DirectedEulerianCycle da algs4 implementa Hierholzer
-            DirectedEulerianCycle eulerian = new DirectedEulerianCycle(G);
+            System.out.println("\nGrafo está balanceado!");
 
-            if (eulerian.hasEulerianCycle()) {
-                System.out.println("\n--- Circuito Euleriano Encontrado ---");
-                
-                double totalCost = 0;
-                StringBuilder path = new StringBuilder();
-                
-                // O Iterable retorna as ARESTAS do ciclo
-                for (DirectedEdge e : eulerian.cycle()) {
-                    path.append(e.from()).append(" -> ");
-                    totalCost += e.weight();
-                }
-                
-                // Para fechar a visualização com o último vértice
-                if (eulerian.cycle().iterator().hasNext()) {
-                    // Pega o destino da última aresta para fechar o ciclo no print
-                    // Mas o algs4 já costuma retornar o ciclo completo
-                }
 
-                System.out.println(path.toString() + "Fim");
-                System.out.printf("Custo Total do Circuito: %.2f\n", totalCost);
-                System.out.println("-------------------------------------");
-            } else {
-                System.out.println("\nNão foi possível encontrar um circuito euleriano.");
+            // Hierholzer
+            DirectedEulerianCycle euler = new DirectedEulerianCycle(graph);
+
+            if (!euler.hasEulerianCycle()) {
+                System.out.println("Não existe circuito euleriano.");
+                return;
             }
 
-        } catch (FileNotFoundException e) {
-            System.err.println("Erro: Arquivo '" + filename + "' não encontrado.");
-        } catch (Exception e) {
-            System.err.println("Erro durante a execução: " + e.getMessage());
-            e.printStackTrace();
+
+            //circuito euleriano
+            System.out.println("\nCircuito Euleriano:");
+
+            List<Integer> ciclo = new ArrayList<>();
+
+            for (int v : euler.cycle()) {
+                ciclo.add(v);
+                System.out.print(v + " ");
+            }
+
+            System.out.println();
+
+
+
+            //Custo Total
+            double custoTotal = 0.0;
+
+            Map<String, Deque<Double>> pesos = new HashMap<>();
+
+            for (int v = 0; v < V; v++) {
+                for (DirectedEdge e : weightedGraph.adj(v)) {
+                    String chave = e.from() + "-" + e.to();
+
+                    pesos.putIfAbsent(chave, new ArrayDeque<Double>());
+                    pesos.get(chave).addLast(e.weight());
+                }
+            }
+
+            for (int i = 0; i < ciclo.size() - 1; i++) {
+                int v = ciclo.get(i);
+                int w = ciclo.get(i + 1);
+
+                String chave = v + "-" + w;
+
+                if (!pesos.containsKey(chave) || pesos.get(chave).isEmpty()) {
+                    System.out.println("Erro ao encontrar peso da aresta: " + chave);
+                    continue;
+                }
+
+                double peso = pesos.get(chave).removeFirst(); 
+                custoTotal += peso;
+            }
+
+            System.out.println("\nCusto total: " + custoTotal);
+
+        } catch (IOException e) {
+            System.out.println("Erro ao ler arquivo: " + e.getMessage());
         }
     }
 }
