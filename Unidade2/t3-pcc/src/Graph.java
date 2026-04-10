@@ -1,86 +1,90 @@
 /******************************************************************************
- *  Compilation:  javac Digraph.java
- *  Execution:    java Digraph filename.txt
- *  Dependencies: Bag.java In.java StdOut.java
- *  Data files:   https://algs4.cs.princeton.edu/42digraph/tinyDG.txt
- *                https://algs4.cs.princeton.edu/42digraph/mediumDG.txt
- *                https://algs4.cs.princeton.edu/42digraph/largeDG.txt
+ *  Compilation:  javac Graph.java
+ *  Execution:    java Graph input.txt
+ *  Dependencies: Bag.java Stack.java In.java StdOut.java
+ *  Data files:   https://algs4.cs.princeton.edu/41graph/tinyG.txt
+ *                https://algs4.cs.princeton.edu/41graph/mediumG.txt
+ *                https://algs4.cs.princeton.edu/41graph/largeG.txt
  *
- *  A graph, implemented using an array of lists.
- *  Parallel edges and self-loops are permitted.
+ *  A graph, implemented using an array of sets.
+ *  Parallel edges and self-loops allowed.
  *
- *  % java Digraph tinyDG.txt
- *  13 vertices, 22 edges
- *  0: 5 1
- *  1:
- *  2: 0 3
- *  3: 5 2
- *  4: 3 2
- *  5: 4
- *  6: 9 4 8 0
- *  7: 6 9
- *  8: 6
- *  9: 11 10
- *  10: 12
- *  11: 4 12
- *  12: 9
+ *  % java Graph tinyG.txt
+ *  13 vertices, 13 edges
+ *  0: 6 2 1 5
+ *  1: 0
+ *  2: 0
+ *  3: 5 4
+ *  4: 5 6 3
+ *  5: 3 4 0
+ *  6: 0 4
+ *  7: 8
+ *  8: 7
+ *  9: 11 10 12
+ *  10: 9
+ *  11: 9 12
+ *  12: 11 9
+ *
+ *  % java Graph mediumG.txt
+ *  250 vertices, 1273 edges
+ *  0: 225 222 211 209 204 202 191 176 163 160 149 114 97 80 68 59 58 49 44 24 15
+ *  1: 220 203 200 194 189 164 150 130 107 72
+ *  2: 141 110 108 86 79 51 42 18 14
+ *  ...
  *
  ******************************************************************************/
 
-package edu.princeton.cs.algs4;
 
 import java.util.NoSuchElementException;
 
 /**
- *  The {@code Digraph} class represents a directed graph of vertices
- *  named 0 through <em>V</em> - 1.
- *  It supports the following two primary operations: add an edge to the digraph,
- *  iterate over all of the vertices adjacent from a given vertex.
- *  It also provides
- *  methods for returning the indegree or outdegree of a vertex,
- *  the number of vertices <em>V</em> in the digraph,
- *  the number of edges <em>E</em> in the digraph, and the reverse digraph.
+ *  The {@code Graph} class represents an undirected graph of vertices
+ *  named 0 through <em>V</em> – 1.
+ *  It supports the following two primary operations: add an edge to the graph,
+ *  iterate over all of the vertices adjacent with a given vertex. It also provides
+ *  methods for returning the degree of a vertex, the number of vertices
+ *  <em>V</em> in the graph, and the number of edges <em>E</em> in the graph.
  *  Parallel edges and self-loops are permitted.
+ *  By convention, a self-loop <em>v</em>-<em>v</em> appears in the
+ *  adjacency list of <em>v</em> twice and contributes two to the degree
+ *  of <em>v</em>.
  *  <p>
  *  This implementation uses an <em>adjacency-lists representation</em>, which
  *  is a vertex-indexed array of {@link Bag} objects.
  *  It uses &Theta;(<em>E</em> + <em>V</em>) space, where <em>E</em> is
  *  the number of edges and <em>V</em> is the number of vertices.
- *  The <code>reverse()</code> method takes &Theta;(<em>E</em> + <em>V</em>) time
- *  and space; all other instance methods take &Theta;(1) time. (Though, iterating over
+ *  All instance methods take &Theta;(1) time. (Though, iterating over
  *  the vertices returned by {@link #adj(int)} takes time proportional
- *  to the outdegree of the vertex.)
- *  Constructing an empty digraph with <em>V</em> vertices takes
- *  &Theta;(<em>V</em>) time; constructing a digraph with <em>E</em> edges
+ *  to the degree of the vertex.)
+ *  Constructing an empty graph with <em>V</em> vertices takes
+ *  &Theta;(<em>V</em>) time; constructing a graph with <em>E</em> edges
  *  and <em>V</em> vertices takes &Theta;(<em>E</em> + <em>V</em>) time.
  *  <p>
- *  For additional documentation,
- *  see <a href="https://algs4.cs.princeton.edu/42digraph">Section 4.2</a> of
- *  <i>Algorithms, 4th Edition</i> by Robert Sedgewick and Kevin Wayne.
+ *  For additional documentation, see
+ *  <a href="https://algs4.cs.princeton.edu/41graph">Section 4.1</a>
+ *  of <i>Algorithms, 4th Edition</i> by Robert Sedgewick and Kevin Wayne.
  *
  *  @author Robert Sedgewick
  *  @author Kevin Wayne
  */
-
-public class Digraph {
+public class Graph {
     private static final String NEWLINE = System.getProperty("line.separator");
 
-    private final int V;           // number of vertices in this digraph
-    private int E;                 // number of edges in this digraph
-    private Bag<Integer>[] adj;    // adj[v] = adjacency list for vertex v
-    private int[] indegree;        // indegree[v] = indegree of vertex v
+    private final int V;
+    private int E;
+    private Bag<Integer>[] adj;
 
     /**
-     * Initializes an empty digraph with <em>V</em> vertices.
+     * Initializes an empty graph with {@code V} vertices and 0 edges.
+     * param V the number of vertices
      *
-     * @param  V the number of vertices
+     * @param  V number of vertices
      * @throws IllegalArgumentException if {@code V < 0}
      */
-    public Digraph(int V) {
-        if (V < 0) throw new IllegalArgumentException("Number of vertices in a Digraph must be non-negative");
+    public Graph(int V) {
+        if (V < 0) throw new IllegalArgumentException("Number of vertices must be non-negative");
         this.V = V;
         this.E = 0;
-        indegree = new int[V];
         adj = (Bag<Integer>[]) new Bag[V];
         for (int v = 0; v < V; v++) {
             adj[v] = new Bag<Integer>();
@@ -88,7 +92,7 @@ public class Digraph {
     }
 
     /**
-     * Initializes a digraph from the specified input stream.
+     * Initializes a graph from the specified input stream.
      * The format is the number of vertices <em>V</em>,
      * followed by the number of edges <em>E</em>,
      * followed by <em>E</em> pairs of vertices, with each entry separated by whitespace.
@@ -99,46 +103,41 @@ public class Digraph {
      * @throws IllegalArgumentException if the number of vertices or edges is negative
      * @throws IllegalArgumentException if the input stream is in the wrong format
      */
-    public Digraph(In in) {
+    public Graph(In in) {
         if (in == null) throw new IllegalArgumentException("argument is null");
         try {
             this.V = in.readInt();
-            if (V < 0) throw new IllegalArgumentException("number of vertices in a Digraph must be non-negative");
-            indegree = new int[V];
+            if (V < 0) throw new IllegalArgumentException("number of vertices in a Graph must be non-negative");
             adj = (Bag<Integer>[]) new Bag[V];
             for (int v = 0; v < V; v++) {
                 adj[v] = new Bag<Integer>();
             }
             int E = in.readInt();
-            if (E < 0) throw new IllegalArgumentException("number of edges in a Digraph must be non-negative");
+            if (E < 0) throw new IllegalArgumentException("number of edges in a Graph must be non-negative");
             for (int i = 0; i < E; i++) {
                 int v = in.readInt();
                 int w = in.readInt();
+                validateVertex(v);
+                validateVertex(w);
                 addEdge(v, w);
             }
         }
         catch (NoSuchElementException e) {
-            throw new IllegalArgumentException("invalid input format in Digraph constructor", e);
+            throw new IllegalArgumentException("invalid input format in Graph constructor", e);
         }
     }
 
+
     /**
-     * Initializes a new digraph that is a deep copy of the specified digraph.
+     * Initializes a new graph that is a deep copy of {@code graph}.
      *
-     * @param  digraph the digraph to copy
-     * @throws IllegalArgumentException if {@code digraph} is {@code null}
+     * @param  graph the graph to copy
+     * @throws IllegalArgumentException if {@code graph} is {@code null}
      */
-    public Digraph(Digraph digraph) {
-        if (digraph == null) throw new IllegalArgumentException("argument is null");
-
-        this.V = digraph.V();
-        this.E = digraph.E();
-        if (V < 0) throw new IllegalArgumentException("Number of vertices in a Digraph must be non-negative");
-
-        // update indegrees
-        indegree = new int[V];
-        for (int v = 0; v < V; v++)
-            this.indegree[v] = digraph.indegree(v);
+    public Graph(Graph graph) {
+        this.V = graph.V();
+        this.E = graph.E();
+        if (V < 0) throw new IllegalArgumentException("Number of vertices must be non-negative");
 
         // update adjacency lists
         adj = (Bag<Integer>[]) new Bag[V];
@@ -146,10 +145,10 @@ public class Digraph {
             adj[v] = new Bag<Integer>();
         }
 
-        for (int v = 0; v < digraph.V(); v++) {
+        for (int v = 0; v < graph.V(); v++) {
             // reverse so that adjacency list is in same order as original
             Stack<Integer> reverse = new Stack<Integer>();
-            for (int w : digraph.adj[v]) {
+            for (int w : graph.adj[v]) {
                 reverse.push(w);
             }
             for (int w : reverse) {
@@ -159,23 +158,22 @@ public class Digraph {
     }
 
     /**
-     * Returns the number of vertices in this digraph.
+     * Returns the number of vertices in this graph.
      *
-     * @return the number of vertices in this digraph
+     * @return the number of vertices in this graph
      */
     public int V() {
         return V;
     }
 
     /**
-     * Returns the number of edges in this digraph.
+     * Returns the number of edges in this graph.
      *
-     * @return the number of edges in this digraph
+     * @return the number of edges in this graph
      */
     public int E() {
         return E;
     }
-
 
     // throw an IllegalArgumentException unless {@code 0 <= v < V}
     private void validateVertex(int v) {
@@ -184,25 +182,26 @@ public class Digraph {
     }
 
     /**
-     * Adds the directed edge v→w to this digraph.
+     * Adds the undirected edge v-w to this graph.
      *
-     * @param  v the tail vertex
-     * @param  w the head vertex
+     * @param  v one vertex in the edge
+     * @param  w the other vertex in the edge
      * @throws IllegalArgumentException unless both {@code 0 <= v < V} and {@code 0 <= w < V}
      */
     public void addEdge(int v, int w) {
         validateVertex(v);
         validateVertex(w);
-        adj[v].add(w);
-        indegree[w]++;
         E++;
+        adj[v].add(w);
+        adj[w].add(v);
     }
 
+
     /**
-     * Returns the vertices adjacent from vertex {@code v} in this digraph.
+     * Returns the vertices adjacent with vertex {@code v}.
      *
      * @param  v the vertex
-     * @return the vertices adjacent from vertex {@code v} in this digraph, as an iterable
+     * @return the vertices adjacent with vertex {@code v}, as an iterable
      * @throws IllegalArgumentException unless {@code 0 <= v < V}
      */
     public Iterable<Integer> adj(int v) {
@@ -211,48 +210,20 @@ public class Digraph {
     }
 
     /**
-     * Returns the number of directed edges incident from vertex {@code v}.
-     * This is known as the <em>outdegree</em> of vertex {@code v}.
+     * Returns the degree of vertex {@code v}.
      *
      * @param  v the vertex
-     * @return the outdegree of vertex {@code v}
+     * @return the degree of vertex {@code v}
      * @throws IllegalArgumentException unless {@code 0 <= v < V}
      */
-    public int outdegree(int v) {
+    public int degree(int v) {
         validateVertex(v);
         return adj[v].size();
     }
 
-    /**
-     * Returns the number of directed edges incident to vertex {@code v}.
-     * This is known as the <em>indegree</em> of vertex {@code v}.
-     *
-     * @param  v the vertex
-     * @return the indegree of vertex {@code v}
-     * @throws IllegalArgumentException unless {@code 0 <= v < V}
-     */
-    public int indegree(int v) {
-        validateVertex(v);
-        return indegree[v];
-    }
 
     /**
-     * Returns the reverse of the digraph.
-     *
-     * @return the reverse of the digraph
-     */
-    public Digraph reverse() {
-        Digraph reverse = new Digraph(V);
-        for (int v = 0; v < V; v++) {
-            for (int w : adj(v)) {
-                reverse.addEdge(w, v);
-            }
-        }
-        return reverse;
-    }
-
-    /**
-     * Returns a string representation of the graph.
+     * Returns a string representation of this graph.
      *
      * @return the number of vertices <em>V</em>, followed by the number of edges <em>E</em>,
      *         followed by the <em>V</em> adjacency lists
@@ -261,9 +232,9 @@ public class Digraph {
         StringBuilder s = new StringBuilder();
         s.append(V + " vertices, " + E + " edges " + NEWLINE);
         for (int v = 0; v < V; v++) {
-            s.append(String.format("%d: ", v));
+            s.append(v + ": ");
             for (int w : adj[v]) {
-                s.append(String.format("%d ", w));
+                s.append(w + " ");
             }
             s.append(NEWLINE);
         }
@@ -271,10 +242,10 @@ public class Digraph {
     }
 
     /**
-     * Returns a string representation of this digraph in DOT format,
+     * Returns a string representation of this graph in DOT format,
      * suitable for visualization with Graphviz.
      *
-     * To visualize the digraph, install Graphviz (e.g., "brew install graphviz").
+     * To visualize the graph, install Graphviz (e.g., "brew install graphviz").
      * Then use one of the graph visualization tools
      *    - dot    (hierarchical or layer drawing)
      *    - neato  (spring model)
@@ -287,19 +258,28 @@ public class Digraph {
      *    - dot input.dot -Tsvg -o output.svg
      *    - dot input.dot -Tpdf -o output.pdf
      *
-     * To change the digraph attributes (e.g., vertex and edge shapes, arrows, colors)
+     * To change the graph attributes (e.g., vertex and edge shapes, arrows, colors)
      *  in the DOT format, see https://graphviz.org/doc/info/lang.html
      *
-     * @return a string representation of this digraph in DOT format
+     * @return a string representation of this graph in DOT format
      */
     public String toDot() {
         StringBuilder s = new StringBuilder();
-        s.append("digraph {" + NEWLINE);
+        s.append("graph {" + NEWLINE);
         s.append("node[shape=circle, style=filled, fixedsize=true, width=0.3, fontsize=\"10pt\"]" + NEWLINE);
-        s.append("edge[arrowhead=normal]" + NEWLINE);
+        int selfLoops = 0;
         for (int v = 0; v < V; v++) {
             for (int w : adj[v]) {
-                s.append(v + " -> " + w + NEWLINE);
+                if (v < w) {
+                    s.append(v + " -- " + w + NEWLINE);
+                }
+                else if (v == w) {
+                    // include only one copy of each self loop (self loops will be consecutive)
+                    if (selfLoops % 2 == 0) {
+                        s.append(v + " -- " + w + NEWLINE);
+                    }
+                    selfLoops++;
+                }
             }
         }
         s.append("}" + NEWLINE);
@@ -307,13 +287,13 @@ public class Digraph {
     }
 
     /**
-     * Unit tests the {@code Digraph} data type.
+     * Unit tests the {@code Graph} data type.
      *
      * @param args the command-line arguments
      */
     public static void main(String[] args) {
         In in = new In(args[0]);
-        Digraph graph = new Digraph(in);
+        Graph graph = new Graph(in);
         StdOut.println(graph);
     }
 
