@@ -10,6 +10,10 @@ public class Main {
                 ? args[0]
                 : "dados/dados02.txt";
         java.io.File file = new java.io.File(inputPath);
+        if (!file.exists() && (args == null || args.length == 0)) {
+            java.io.File repoRelative = new java.io.File("Unidade3/T1/dados/dados02.txt");
+            if (repoRelative.exists()) file = repoRelative;
+        }
         if (file.exists()) {
             System.setIn(new java.io.FileInputStream(file));
         }
