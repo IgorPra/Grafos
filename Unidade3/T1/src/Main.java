@@ -1,12 +1,15 @@
 import java.util.Locale;
 import algs4.Edge;
 import algs4.EdgeWeightedGraph;
-import algs4.KruskalMST;
+import algs4.PrimMST;
 import algs4.StdIn;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        java.io.File file = new java.io.File("dados/dados02.txt");
+        String inputPath = (args != null && args.length > 0 && args[0] != null && !args[0].isBlank())
+                ? args[0]
+                : "dados/dados02.txt";
+        java.io.File file = new java.io.File(inputPath);
         if (file.exists()) {
             System.setIn(new java.io.FileInputStream(file));
         }
@@ -44,7 +47,7 @@ public class Main {
             }
         }
 
-        KruskalMST mst = new KruskalMST(graph);
+        PrimMST mst = new PrimMST(graph);
 
         System.out.printf(Locale.US, "%.10f%n", mst.weight());
     }

@@ -27,8 +27,7 @@
 │   └── algs4/
 │       ├── Edge.java
 │       ├── EdgeWeightedGraph.java
-│       ├── KruskalMST.java
-│       ├── UF.java
+│       ├── PrimMST.java
 │       └── ...
 └── README.md
 ```
@@ -44,10 +43,10 @@ javac -d out src/algs4/*.java src/Main.java
 Execute com um arquivo de entrada:
 
 ```bash
-java -cp out Main < dados/dados02.txt
+java -cp out Main dados/dados02.txt
 ```
 
-Observacao: a `Main.java` tambem tenta abrir `dados/dados02.txt` automaticamente se esse arquivo existir. Isso facilita testes locais. No Kattis, esse arquivo nao existe no ambiente de submissao, entao a solucao usa normalmente a entrada padrao.
+Observacao: se nenhum argumento for passado, a `Main.java` tenta abrir `dados/dados02.txt` automaticamente se esse arquivo existir. Isso facilita testes locais. No Kattis, esse arquivo nao existe no ambiente de submissao, entao a solucao usa normalmente a entrada padrao.
 
 ## Modelagem como Grafo Ponderado
 
@@ -70,7 +69,7 @@ Assim, encontrar o menor comprimento adicional de cabos equivale a encontrar uma
 
 ## Algoritmo Utilizado
 
-A solucao usa **Kruskal**, implementado pela classe `KruskalMST` da pasta `src/algs4`.
+A solucao usa **Prim**, implementado pela classe `PrimMST` da pasta `src/algs4`.
 
 Na `Main.java`, o fluxo principal e:
 
@@ -80,32 +79,22 @@ Na `Main.java`, o fluxo principal e:
 4. Adicionar arestas de peso `0.0` para as primeiras `e` treehouses, que ja estao conectadas.
 5. Adicionar arestas de peso `0.0` para os `p` cabos ja existentes informados na entrada.
 6. Adicionar todas as arestas possiveis entre pares de treehouses, usando distancia euclidiana como peso.
-7. Executar `KruskalMST`.
+7. Executar `PrimMST`.
 8. Imprimir `mst.weight()`, que representa o menor comprimento adicional necessario.
 
-## Papel do Union-Find/DSU
+## Papel da Fila de Prioridade (Prim)
 
-Como a solucao usa Kruskal, o **Union-Find/DSU** e essencial para controlar os componentes conectados durante a construcao da arvore geradora minima.
+No Prim, mantemos uma "fronteira" entre os vertices ja conectados na arvore e os vertices ainda fora dela.
 
-No `KruskalMST`, as arestas sao analisadas em ordem crescente de peso. Para cada aresta `(v, w)`:
+Em `PrimMST`, uma fila de prioridade (estrutura `IndexMinPQ`) ajuda a escolher sempre a proxima aresta de menor peso que conecta um vertice novo a arvore.
 
-- se `v` e `w` estao em componentes diferentes, a aresta pode ser adicionada sem formar ciclo;
-- depois disso, os dois componentes sao unidos com `union(v, w)`;
-- se os vertices ja estao no mesmo componente, a aresta e ignorada.
-
-Esse processo garante que o algoritmo sempre escolha arestas baratas sem criar ciclos.
-
-## Papel da Escolha da Proxima Aresta
-
-Esta solucao nao usa Prim. Portanto, nao ha fila de prioridade para escolher a proxima aresta a partir de uma fronteira de vertices visitados.
-
-No Kruskal, a escolha da proxima aresta acontece pela **ordenacao global de todas as arestas por peso**. A classe `KruskalMST` organiza as arestas em ordem crescente e percorre essa lista, usando o Union-Find para decidir se cada aresta entra ou nao na MST.
+Isso garante que, a cada passo, a arvore cresce adicionando o vertice mais barato de ser conectado, sem precisar ordenar todas as arestas globalmente.
 
 ## Variacao de MST Usada
 
 A variacao usada e uma MST com **arestas preexistentes de custo zero**.
 
-As conexoes que ja existem no problema nao precisam ser pagas novamente, entao elas sao representadas como arestas de peso `0.0`. Com isso, o Kruskal pode escolher essas arestas gratuitamente antes das demais, e o peso final da MST representa apenas o custo adicional que ainda precisa ser construido.
+As conexoes que ja existem no problema nao precisam ser pagas novamente, entao elas sao representadas como arestas de peso `0.0`. Com isso, o Prim prioriza naturalmente essas arestas na fronteira quando elas forem a opcao mais barata, e o peso final da MST representa apenas o custo adicional que ainda precisa ser construido.
 
 ## Casos Especiais Relevantes
 
@@ -120,24 +109,23 @@ As conexoes que ja existem no problema nao precisam ser pagas novamente, entao e
 Como o grafo e completo, o numero de arestas candidatas e:
 
 ```text
-m = n(n - 1) / 2
+e = v(v - 1) / 2
 ```
 
-Considerando `m` como o numero de arestas:
+Considerando `v` como o numero de vertices e `e` como o numero de arestas:
 
-- Gerar todas as arestas: `O(n^2)`;
-- Ordenar as arestas no Kruskal: `O(m log m)`;
-- Operacoes de Union-Find: aproximadamente `O(m α(n))`, quase linear;
-- Armazenar o grafo e as arestas: `O(m)`.
+- Gerar todas as arestas: `O(v^2)`;
+- Executar Prim com fila de prioridade: `O(e log v)`;
+- Armazenar o grafo e as arestas: `O(e)`.
 
-A etapa dominante e a ordenacao das arestas, entao a complexidade de tempo fica em:
+A etapa dominante e a fila de prioridade, entao a complexidade de tempo fica em:
 
 ```text
-O(m log m) = O(n^2 log n)
+O(e log v) = O(v^2 log v)
 ```
 
 A complexidade de espaco e:
 
 ```text
-O(m) = O(n^2)
+O(e) = O(v^2)
 ```

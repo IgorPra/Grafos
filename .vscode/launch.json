@@ -6,10 +6,10 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Debug T1 Main (dados02)",
+            "name": "Main",
             "request": "launch",
             "mainClass": "Main",
-            "cwd": "${workspaceFolder}/Unidade3/T1",
+            "projectName": "Grafos_7a5dec6a"
         }
     ]
 }
