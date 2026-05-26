@@ -5,7 +5,6 @@ import algs4.KruskalMST;
 import algs4.StdIn;
 
 public class Main {
-
     public static void main(String[] args) throws Exception {
         java.io.File file = new java.io.File("dados/dados02.txt");
         if (file.exists()) {
