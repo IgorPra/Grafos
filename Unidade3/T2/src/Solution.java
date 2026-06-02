@@ -1,252 +1,164 @@
-import java.util.Locale;
-import java.util.Scanner;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Iterator;
-import java.util.Arrays;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.PriorityQueue;
 
-public class Solution {
-
+class Main {
     public static void main(String[] args) throws Exception {
         File file = new File("dados/dados02.txt");
         if (file.exists()) {
             System.setIn(new FileInputStream(file));
         }
 
-        int n = StdIn.readInt();
-        int e = StdIn.readInt();
-        int p = StdIn.readInt();
+        FastScanner in = new FastScanner();
+        StringBuilder out = new StringBuilder();
 
-        double[] x = new double[n];
-        double[] y = new double[n];
+        int tests = in.nextInt();
+        for (int test = 0; test < tests; test++) {
+            int n = in.nextInt();
+            HashMap<String, Integer> cityIndex = new HashMap<>(n * 2);
+            ArrayList<Edge>[] graph = createGraph(n);
 
-        for (int i = 0; i < n; i++) {
-            x[i] = StdIn.readDouble();
-            y[i] = StdIn.readDouble();
-        }
+            for (int city = 0; city < n; city++) {
+                cityIndex.put(in.next(), city);
 
-        EdgeWeightedGraph graph = new EdgeWeightedGraph(n);
+                int neighbours = in.nextInt();
+                for (int j = 0; j < neighbours; j++) {
+                    int to = in.nextInt() - 1;
+                    int cost = in.nextInt();
+                    graph[city].add(new Edge(to, cost));
+                }
+            }
 
-        for (int i = 1; i < e; i++) {
-            graph.addEdge(new Edge(0, i, 0.0));
-        }
-
-        for (int i = 0; i < p; i++) {
-            int a = StdIn.readInt() - 1;
-            int b = StdIn.readInt() - 1;
-            graph.addEdge(new Edge(a, b, 0.0));
-        }
-
-        for (int i = 0; i < n; i++) {
-            for (int j = i + 1; j < n; j++) {
-                double dx = x[i] - x[j];
-                double dy = y[i] - y[j];
-                double dist = Math.sqrt(dx * dx + dy * dy);
-                graph.addEdge(new Edge(i, j, dist));
+            int queries = in.nextInt();
+            for (int query = 0; query < queries; query++) {
+                int source = cityIndex.get(in.next());
+                int target = cityIndex.get(in.next());
+                out.append(dijkstra(graph, source, target)).append('\n');
             }
         }
 
-        KruskalMST mst = new KruskalMST(graph);
-
-        System.out.printf(Locale.US, "%.10f%n", mst.weight());
+        System.out.print(out);
     }
-}
-
-
-class StdIn {
-    private static final Scanner scanner = new Scanner(System.in);
-    static {
-        scanner.useLocale(Locale.US);
-    }
-    public static int readInt() {
-        return scanner.nextInt();
-    }
-    public static double readDouble() {
-        return scanner.nextDouble();
-    }
-}
-
-class Edge implements Comparable<Edge> {
-    private final int v;
-    private final int w;
-    private final double weight;
-
-    public Edge(int v, int w, double weight) {
-        this.v = v;
-        this.w = w;
-        this.weight = weight;
-    }
-
-    public double weight() {
-        return weight;
-    }
-
-    public int either() {
-        return v;
-    }
-
-    public int other(int vertex) {
-        if (vertex == v) return w;
-        else if (vertex == w) return v;
-        else throw new IllegalArgumentException("Endpoint inválido");
-    }
-
-    @Override
-    public int compareTo(Edge that) {
-        return Double.compare(this.weight, that.weight);
-    }
-}
-
-class EdgeWeightedGraph {
-    private final int V;
-    private int E;
-    private Bag<Edge>[] adj;
 
     @SuppressWarnings("unchecked")
-    public EdgeWeightedGraph(int V) {
-        this.V = V;
-        this.E = 0;
-        adj = (Bag<Edge>[]) new Bag[V];
-        for (int v = 0; v < V; v++) {
-            adj[v] = new Bag<Edge>();
+    private static ArrayList<Edge>[] createGraph(int n) {
+        ArrayList<Edge>[] graph = (ArrayList<Edge>[]) new ArrayList[n];
+        for (int i = 0; i < n; i++) {
+            graph[i] = new ArrayList<>();
         }
+        return graph;
     }
 
-    public int V() {
-        return V;
-    }
+    private static int dijkstra(ArrayList<Edge>[] graph, int source, int target) {
+        int[] dist = new int[graph.length];
+        for (int i = 0; i < dist.length; i++) {
+            dist[i] = Integer.MAX_VALUE;
+        }
 
-    public int E() {
-        return E;
-    }
+        PriorityQueue<State> pq = new PriorityQueue<>();
+        dist[source] = 0;
+        pq.add(new State(source, 0));
 
-    public void addEdge(Edge e) {
-        int v = e.either();
-        int w = e.other(v);
-        adj[v].add(e);
-        adj[w].add(e);
-        E++;
-    }
+        while (!pq.isEmpty()) {
+            State current = pq.poll();
+            if (current.distance != dist[current.vertex]) {
+                continue;
+            }
+            if (current.vertex == target) {
+                return current.distance;
+            }
 
-    public Iterable<Edge> adj(int v) {
-        return adj[v];
-    }
-
-    public Iterable<Edge> edges() {
-        Bag<Edge> list = new Bag<Edge>();
-        for (int v = 0; v < V; v++) {
-            for (Edge e : adj[v]) {
-                if (e.other(v) > v) {
-                    list.add(e);
+            for (Edge edge : graph[current.vertex]) {
+                int newDistance = current.distance + edge.cost;
+                if (newDistance < dist[edge.to]) {
+                    dist[edge.to] = newDistance;
+                    pq.add(new State(edge.to, newDistance));
                 }
             }
         }
-        return list;
+
+        return dist[target];
     }
 }
 
-class UF {
-    private int[] parent;
-    private byte[] rank;
-    private int count;
+class Edge {
+    final int to;
+    final int cost;
 
-    public UF(int n) {
-        if (n < 0) throw new IllegalArgumentException();
-        count = n;
-        parent = new int[n];
-        rank = new byte[n];
-        for (int i = 0; i < n; i++) {
-            parent[i] = i;
-            rank[i] = 0;
-        }
-    }
-
-    public int find(int p) {
-        while (p != parent[p]) {
-            parent[p] = parent[parent[p]];
-            p = parent[p];
-        }
-        return p;
-    }
-
-    public int count() {
-        return count;
-    }
-
-    public void union(int p, int q) {
-        int rootP = find(p);
-        int rootQ = find(q);
-        if (rootP == rootQ) return;
-        if (rank[rootP] < rank[rootQ]) parent[rootP] = rootQ;
-        else if (rank[rootP] > rank[rootQ]) parent[rootQ] = rootP;
-        else {
-            parent[rootQ] = rootP;
-            rank[rootP]++;
-        }
-        count--;
+    Edge(int to, int cost) {
+        this.to = to;
+        this.cost = cost;
     }
 }
 
-class Queue<Item> implements Iterable<Item> {
-    private final List<Item> list = new ArrayList<>();
-    public void enqueue(Item item) {
-        list.add(item);
+class State implements Comparable<State> {
+    final int vertex;
+    final int distance;
+
+    State(int vertex, int distance) {
+        this.vertex = vertex;
+        this.distance = distance;
     }
-    public int size() {
-        return list.size();
-    }
+
     @Override
-    public Iterator<Item> iterator() {
-        return list.iterator();
+    public int compareTo(State that) {
+        return Integer.compare(this.distance, that.distance);
     }
 }
 
-class Bag<Item> implements Iterable<Item> {
-    private final List<Item> list = new ArrayList<>();
-    public void add(Item item) {
-        list.add(item);
-    }
-    public int size() {
-        return list.size();
-    }
-    @Override
-    public Iterator<Item> iterator() {
-        return list.iterator();
-    }
-}
+class FastScanner {
+    private final BufferedInputStream in = new BufferedInputStream(System.in);
+    private final byte[] buffer = new byte[1 << 16];
+    private int pointer = 0;
+    private int length = 0;
 
-class KruskalMST {
-    private double weight;
-    private final Queue<Edge> mst = new Queue<>();
-
-    public KruskalMST(EdgeWeightedGraph G) {
-        Edge[] edges = new Edge[G.E()];
-        int t = 0;
-        for (Edge e : G.edges()) {
-            edges[t++] = e;
-        }
-        Arrays.sort(edges);
-
-        UF uf = new UF(G.V());
-        for (int i = 0; i < G.E() && mst.size() < G.V() - 1; i++) {
-            Edge e = edges[i];
-            int v = e.either();
-            int w = e.other(v);
-            if (uf.find(v) != uf.find(w)) {
-                uf.union(v, w);
-                mst.enqueue(e);
-                weight += e.weight();
+    private int read() throws Exception {
+        if (pointer >= length) {
+            length = in.read(buffer);
+            pointer = 0;
+            if (length <= 0) {
+                return -1;
             }
         }
+        return buffer[pointer++];
     }
 
-    public Iterable<Edge> edges() {
-        return mst;
+    String next() throws Exception {
+        StringBuilder value = new StringBuilder();
+        int c;
+        do {
+            c = read();
+        } while (c <= ' ' && c != -1);
+
+        while (c > ' ') {
+            value.append((char) c);
+            c = read();
+        }
+
+        return value.toString();
     }
 
-    public double weight() {
-        return weight;
+    int nextInt() throws Exception {
+        int c;
+        do {
+            c = read();
+        } while (c <= ' ' && c != -1);
+
+        int sign = 1;
+        if (c == '-') {
+            sign = -1;
+            c = read();
+        }
+
+        int value = 0;
+        while (c > ' ') {
+            value = value * 10 + c - '0';
+            c = read();
+        }
+
+        return value * sign;
     }
 }
