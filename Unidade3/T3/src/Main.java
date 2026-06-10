@@ -36,6 +36,7 @@ public class Main {
 
     Bipartite bipartite = new Bipartite(graph);
     print(bipartite.isBipartite());
+    Solution.solve(graph, n, m);
   }
 
   private static int[] range(int n) {
