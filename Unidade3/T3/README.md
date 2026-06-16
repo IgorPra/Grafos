@@ -4,6 +4,7 @@
 > **Plataforma:** [cses.fi](https://cses.fi/)  
 > **Grupo C — Disciplina: Resolução de Problemas com Grafos**  
 > **Professor:** Prof. Me Ricardo Carubbi
+> **LINK DO VIDEO:** [https://youtu.be/tU6A-vBVyDA](https://youtu.be/tU6A-vBVyDA)
 
 ---
 
